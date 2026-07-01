@@ -11,7 +11,19 @@ pipeline {
         buildDiscarder(logRotator(numToKeepStr: '10'))
     }
 
+    environment {
+        SONAR_HOME = tool "Sonar"
+    }
+
     stages {
+
+        stage("SonarQube Analysis") {
+            steps {
+                withSonarQubeEnv('Sonar') {
+                    sh '$SONAR_HOME/bin/sonar-scanner -Dsonar.projectKey=ReactNodeApp -Dsonar.projectName=ReactNodeApp '
+                }
+            }
+        }
 
         stage('Install Dependencies') {
             parallel {
