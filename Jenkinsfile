@@ -107,6 +107,22 @@ pipeline {
             }
         }
 
+        stage('Trivy Docker Image Scan') {
+            steps {
+                sh '''
+                trivy image --severity HIGH,CRITICAL
+                --format table 
+                -o backend-trivy-report.txt 
+                reactnodeapp-backend:latest
+
+                trivy image --severity HIGH,CRITICAL 
+                --format table 
+                -o frontend-trivy-report.txt 
+                reactnodeapp-frontend:latest
+                '''
+            }
+        }
+
         stage('Deploy') {
             steps {
                 sh '''
