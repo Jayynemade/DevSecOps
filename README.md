@@ -17,50 +17,8 @@ This repository ships a **Jenkins Declarative Pipeline** (`Jenkinsfile`) that ta
 
 ## 🧭 Pipeline Flow
 
-┌─────────────────────┐
-│  SonarQube Analysis │  Static code analysis (bugs, smells, hotspots)
-└──────────┬──────────┘
-           ▼
-┌─────────────────────┐
-│   OWASP Dependency  │  Scans dependencies for known CVEs
-│        Check        │
-└──────────┬──────────┘
-           ▼
-┌─────────────────────┐
-│  Quality Gate Scan  │  Blocks/warns based on Sonar results
-└──────────┬──────────┘
-           ▼
-┌─────────────────────┐
-│    Trivy FS Scan    │  Filesystem-level vulnerability scan
-└──────────┬──────────┘
-           ▼
-┌──────────────────────┐
-│ Install Dependencies │  Backend + Frontend (parallel)
-└──────────┬───────────┘
-           ▼
-┌─────────────────────┐
-│        Test         │  Backend + Frontend (parallel)
-└──────────┬──────────┘
-           ▼
-┌─────────────────────┐
-│    Lint Frontend    │  Code style & quality enforcement
-└──────────┬──────────┘
-           ▼
-┌─────────────────────┐
-│    Build Frontend   │  Production build
-└──────────┬──────────┘
-           ▼
-┌─────────────────────┐
-│ Build Docker Images │  Backend + Frontend containers
-└──────────┬──────────┘
-           ▼
-┌─────────────────────┐
-│   Trivy Image Scan  │  Scans built images (HIGH/CRITICAL)
-└──────────┬──────────┘
-           ▼
-┌─────────────────────┐
-│       Deploy        │  docker compose up -d
-└─────────────────────┘
+<img width="268" height="443" alt="Screenshot 2026-07-02 at 1 37 43 PM" src="https://github.com/user-attachments/assets/edf3aa2f-7241-442f-bcc1-7d926f9a1d92" />
+
 
 ## 🛠️ Stage-by-Stage Breakdown
 
