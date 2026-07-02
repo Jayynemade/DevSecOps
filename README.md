@@ -17,7 +17,7 @@ This repository ships a **Jenkins Declarative Pipeline** (`Jenkinsfile`) that ta
 
 ## 🧭 Pipeline Flow
 
-<img width="268" height="443" alt="Screenshot 2026-07-02 at 1 37 43 PM" src="https://github.com/user-attachments/assets/edf3aa2f-7241-442f-bcc1-7d926f9a1d92" />
+<img width="500" height="827" alt="Screenshot 2026-07-02 at 1 37 43 PM" src="https://github.com/user-attachments/assets/edf3aa2f-7241-442f-bcc1-7d926f9a1d92" />
 
 
 ## 🛠️ Stage-by-Stage Breakdown
