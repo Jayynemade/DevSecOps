@@ -1,0 +1,180 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+
+  security-analysis:
+    name: Security Analysis
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Trivy
+        run: |
+          sudo apt-get update
+          sudo apt-get install wget -y
+          wget https://github.com/aquasecurity/trivy/releases/latest/download/trivy_0.65.0_Linux-64bit.deb
+          sudo dpkg -i trivy_0.65.0_Linux-64bit.deb
+
+      - name: SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@v5
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        with:
+          args: >
+            -Dsonar.projectKey=ReactNodeApp
+            -Dsonar.projectName=ReactNodeApp
+
+      - name: SonarQube Quality Gate
+        uses: SonarSource/sonarqube-quality-gate-action@v1
+        timeout-minutes: 2
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+      - name: OWASP Dependency Check
+        uses: dependency-check/Dependency-Check_Action@main
+        with:
+          project: ReactNodeApp
+          path: .
+          format: HTML
+
+      - name: Upload Dependency Check Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-check-report
+          path: reports/
+
+      - name: Trivy Filesystem Scan
+        run: |
+          trivy fs \
+            --format table \
+            -o trivy-fs-report.txt \
+            .
+
+      - name: Upload Trivy Filesystem Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-fs-report
+          path: trivy-fs-report.txt
+
+  backend:
+    name: Backend Tests
+    runs-on: ubuntu-latest
+    needs: security-analysis
+
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install Dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Run Tests
+        run: npm test
+
+  frontend:
+    name: Frontend Tests and Build
+    runs-on: ubuntu-latest
+    needs: security-analysis
+
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install Dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Run Tests
+        run: npm test
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build
+        run: npm run build
+
+  docker:
+    name: Docker Build, Scan and Deploy
+    runs-on: ubuntu-latest
+    needs:
+      - backend
+      - frontend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Trivy
+        run: |
+          sudo apt-get update
+          sudo apt-get install wget -y
+          wget https://github.com/aquasecurity/trivy/releases/latest/download/trivy_0.65.0_Linux-64bit.deb
+          sudo dpkg -i trivy_0.65.0_Linux-64bit.deb
+
+      - name: Build Docker Images
+        run: docker compose build
+
+      - name: Scan Backend Docker Image
+        run: |
+          trivy image \
+            --severity HIGH,CRITICAL \
+            --format table \
+            -o backend-trivy-report.txt \
+            reactnodeapp-backend:latest
+
+      - name: Scan Frontend Docker Image
+        run: |
+          trivy image \
+            --severity HIGH,CRITICAL \
+            --format table \
+            -o frontend-trivy-report.txt \
+            reactnodeapp-frontend:latest
+
+      - name: Upload Backend Trivy Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-trivy-report
+          path: backend-trivy-report.txt
+
+      - name: Upload Frontend Trivy Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-trivy-report
+          path: frontend-trivy-report.txt
+
+      - name: Deploy Application
+        run: |
+          docker compose down || true
+          docker compose up -d
