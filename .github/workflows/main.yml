@@ -9,7 +9,6 @@ on:
       - main
 
 jobs:
-
   security-analysis:
     name: Security Analysis
     runs-on: ubuntu-latest
@@ -23,12 +22,10 @@ jobs:
         with:
           node-version: 20
 
-      - name: Install Trivy
-        run: |
-          sudo apt-get update
-          sudo apt-get install wget -y
-          wget https://github.com/aquasecurity/trivy/releases/latest/download/trivy_0.65.0_Linux-64bit.deb
-          sudo dpkg -i trivy_0.65.0_Linux-64bit.deb
+      - name: Setup Trivy
+        uses: aquasecurity/setup-trivy@v0.2.2
+        with:
+          version: latest
 
       - name: SonarQube Scan
         uses: SonarSource/sonarqube-scan-action@v5
@@ -62,6 +59,7 @@ jobs:
       - name: Trivy Filesystem Scan
         run: |
           trivy fs \
+            --severity HIGH,CRITICAL \
             --format table \
             -o trivy-fs-report.txt \
             .
@@ -136,12 +134,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Trivy
-        run: |
-          sudo apt-get update
-          sudo apt-get install wget -y
-          wget https://github.com/aquasecurity/trivy/releases/latest/download/trivy_0.65.0_Linux-64bit.deb
-          sudo dpkg -i trivy_0.65.0_Linux-64bit.deb
+      - name: Setup Trivy
+        uses: aquasecurity/setup-trivy@v0.2.2
+        with:
+          version: latest
 
       - name: Build Docker Images
         run: docker compose build
