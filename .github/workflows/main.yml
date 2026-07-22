@@ -22,10 +22,21 @@ jobs:
         with:
           node-version: 20
 
-      - name: Setup Trivy
-        uses: aquasecurity/setup-trivy@v0.2.2
-        with:
-          version: latest
+      - name: Install Trivy
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget curl
+
+          TRIVY_VERSION=$(curl -s https://api.github.com/repos/aquasecurity/trivy/releases/latest \
+            | grep '"tag_name"' \
+            | cut -d '"' -f4 \
+            | sed 's/^v//')
+
+          wget https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_Linux-64bit.deb
+
+          sudo dpkg -i trivy_${TRIVY_VERSION}_Linux-64bit.deb
+
+          trivy --version
 
       - name: SonarQube Scan
         uses: SonarSource/sonarqube-scan-action@v5
@@ -80,9 +91,11 @@ jobs:
         working-directory: backend
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
@@ -104,9 +117,11 @@ jobs:
         working-directory: frontend
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
@@ -132,12 +147,24 @@ jobs:
       - frontend
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
-      - name: Setup Trivy
-        uses: aquasecurity/setup-trivy@v0.2.6
-        with:
-          version: latest
+      - name: Install Trivy
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget curl
+
+          TRIVY_VERSION=$(curl -s https://api.github.com/repos/aquasecurity/trivy/releases/latest \
+            | grep '"tag_name"' \
+            | cut -d '"' -f4 \
+            | sed 's/^v//')
+
+          wget https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_Linux-64bit.deb
+
+          sudo dpkg -i trivy_${TRIVY_VERSION}_Linux-64bit.deb
+
+          trivy --version
 
       - name: Build Docker Images
         run: docker compose build
